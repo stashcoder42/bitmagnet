@@ -1,9 +1,11 @@
 package appfx
 
 import (
+	"github.com/bitmagnet-io/bitmagnet/internal/apikey/apikeyfx"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cli"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cli/args"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cli/hooks"
+	"github.com/bitmagnet-io/bitmagnet/internal/app/cmd/apikeycmd"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cmd/classifiercmd"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cmd/configcmd"
 	"github.com/bitmagnet-io/bitmagnet/internal/app/cmd/processcmd"
@@ -38,6 +40,7 @@ import (
 func New() fx.Option {
 	return fx.Module(
 		"app",
+		apikeyfx.New(),
 		blockingfx.New(),
 		classifierfx.New(),
 		configfx.New(),
@@ -64,6 +67,7 @@ func New() fx.Option {
 			cli.New,
 			hooks.New,
 			// cli commands:
+			apikeycmd.New,
 			classifiercmd.New,
 			configcmd.New,
 			reprocesscmd.New,

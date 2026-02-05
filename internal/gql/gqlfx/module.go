@@ -2,6 +2,7 @@ package gqlfx
 
 import (
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/bitmagnet-io/bitmagnet/internal/apikey"
 	"github.com/bitmagnet-io/bitmagnet/internal/blocking"
 	"github.com/bitmagnet-io/bitmagnet/internal/database/dao"
 	"github.com/bitmagnet-io/bitmagnet/internal/database/search"
@@ -74,6 +75,10 @@ func New() fx.Option {
 						if err != nil {
 							return nil, err
 						}
+						aks, err := p.APIKeyService.Get()
+						if err != nil {
+							return nil, err
+						}
 						return &resolvers.Resolver{
 							Dao:                  d,
 							Search:               s,
@@ -83,6 +88,7 @@ func New() fx.Option {
 							TorrentMetricsClient: tm,
 							Processor:            pr,
 							BlockingManager:      bm,
+							APIKeyService:        aks,
 						}, nil
 					}),
 				}
@@ -111,6 +117,7 @@ type Params struct {
 	TorrentMetricsClient lazy.Lazy[torrentmetrics.Client]
 	Processor            lazy.Lazy[processor.Processor]
 	BlockingManager      lazy.Lazy[blocking.Manager]
+	APIKeyService        lazy.Lazy[apikey.Service]
 }
 
 type Result struct {

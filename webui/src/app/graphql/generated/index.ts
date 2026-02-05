@@ -25,6 +25,28 @@ export type Scalars = {
   Year: { input: number; output: number; }
 };
 
+export type ApiKeyInfo = {
+  __typename?: 'APIKeyInfo';
+  apiKey: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ApiKeyMutation = {
+  __typename?: 'APIKeyMutation';
+  rotate: ApiKeyRotateResult;
+};
+
+export type ApiKeyQuery = {
+  __typename?: 'APIKeyQuery';
+  current: ApiKeyInfo;
+};
+
+export type ApiKeyRotateResult = {
+  __typename?: 'APIKeyRotateResult';
+  apiKey: Scalars['String']['output'];
+};
+
 export type Content = {
   __typename?: 'Content';
   adult?: Maybe<Scalars['Boolean']['output']>;
@@ -256,12 +278,14 @@ export type MetricsBucketDuration =
 
 export type Mutation = {
   __typename?: 'Mutation';
+  apiKey: ApiKeyMutation;
   queue: QueueMutation;
   torrent: TorrentMutation;
 };
 
 export type Query = {
   __typename?: 'Query';
+  apiKey: ApiKeyQuery;
   health: HealthQuery;
   queue: QueueQuery;
   torrent: TorrentQuery;
@@ -878,6 +902,11 @@ export type TorrentFileFragment = { __typename?: 'TorrentFile', infoHash: string
 
 export type TorrentFilesQueryResultFragment = { __typename?: 'TorrentFilesQueryResult', totalCount: number, hasNextPage?: boolean | null, items: Array<{ __typename?: 'TorrentFile', infoHash: string, index: number, path: string, size: number, fileType?: FileType | null, createdAt: string, updatedAt: string }> };
 
+export type ApiKeyRotateMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ApiKeyRotateMutation = { __typename?: 'Mutation', apiKey: { __typename?: 'APIKeyMutation', rotate: { __typename?: 'APIKeyRotateResult', apiKey: string } } };
+
 export type QueueEnqueueReprocessTorrentsBatchMutationVariables = Exact<{
   input: QueueEnqueueReprocessTorrentsBatchInput;
 }>;
@@ -929,6 +958,11 @@ export type TorrentSetTagsMutationVariables = Exact<{
 
 
 export type TorrentSetTagsMutation = { __typename?: 'Mutation', torrent: { __typename?: 'TorrentMutation', setTags?: void | null } };
+
+export type GetApiKeyQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetApiKeyQuery = { __typename?: 'Query', apiKey: { __typename?: 'APIKeyQuery', current: { __typename?: 'APIKeyInfo', apiKey: string, createdAt: string, updatedAt: string } } };
 
 export type HealthCheckQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1216,6 +1250,26 @@ export const TorrentFilesQueryResultFragmentDoc = gql`
   hasNextPage
 }
     ${TorrentFileFragmentDoc}`;
+export const ApiKeyRotateDocument = gql`
+    mutation APIKeyRotate {
+  apiKey {
+    rotate {
+      apiKey
+    }
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class ApiKeyRotateGQL extends Apollo.Mutation<ApiKeyRotateMutation, ApiKeyRotateMutationVariables> {
+    override document = ApiKeyRotateDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
 export const QueueEnqueueReprocessTorrentsBatchDocument = gql`
     mutation QueueEnqueueReprocessTorrentsBatch($input: QueueEnqueueReprocessTorrentsBatchInput!) {
   queue {
@@ -1337,6 +1391,28 @@ export const TorrentSetTagsDocument = gql`
   })
   export class TorrentSetTagsGQL extends Apollo.Mutation<TorrentSetTagsMutation, TorrentSetTagsMutationVariables> {
     override document = TorrentSetTagsDocument;
+    
+    constructor(apollo: Apollo.Apollo) {
+      super(apollo);
+    }
+  }
+export const GetApiKeyDocument = gql`
+    query GetAPIKey {
+  apiKey {
+    current {
+      apiKey
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+
+  @Injectable({
+    providedIn: 'root'
+  })
+  export class GetApiKeyGQL extends Apollo.Query<GetApiKeyQuery, GetApiKeyQueryVariables> {
+    override document = GetApiKeyDocument;
     
     constructor(apollo: Apollo.Apollo) {
       super(apollo);

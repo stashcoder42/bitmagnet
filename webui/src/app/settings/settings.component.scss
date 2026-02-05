@@ -1,0 +1,65 @@
+.settings-section {
+  padding: 20px 32px;
+
+  h3 {
+    margin-bottom: 8px;
+  }
+
+  .description {
+    color: rgba(var(--mat-sys-on-surface), 0.7);
+    margin-bottom: 20px;
+  }
+}
+
+.api-key-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.api-key-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-key-field {
+  width: 100%;
+  max-width: 600px;
+
+  input {
+    font-family: monospace;
+  }
+}
+
+.api-key-actions {
+  display: flex;
+  gap: 12px;
+
+  button {
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+.api-key-meta {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: rgba(var(--mat-sys-on-surface), 0.6);
+
+  p {
+    margin: 4px 0;
+  }
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+mat-toolbar h2 mat-icon {
+  position: relative;
+  top: 3px;
+  margin-right: 14px;
+  margin-left: 32px;
+}

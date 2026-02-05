@@ -1,0 +1,9 @@
+query GetAPIKey {
+  apiKey {
+    current {
+      apiKey
+      createdAt
+      updatedAt
+    }
+  }
+}

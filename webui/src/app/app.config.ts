@@ -14,8 +14,9 @@ import { provideTransloco } from "@jsverse/transloco";
 import { provideCharts, withDefaultRegisterables } from "ng2-charts";
 import { provideApollo } from "apollo-angular";
 import { HttpLink } from "apollo-angular/http";
-import { InMemoryCache } from "@apollo/client/core";
-import { graphqlEndpoint } from "../environments/environment";
+import { InMemoryCache, ApolloLink } from "@apollo/client/core";
+import { setContext } from "@apollo/client/link/context";
+import { graphqlEndpoint, getApiKey } from "../environments/environment";
 import { TranslocoImportLoader } from "./i18n/transloco.loader";
 import { routes } from "./app.routes";
 
@@ -28,8 +29,23 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideApollo(() => {
       const httpLink = inject(HttpLink);
+
+      // Create auth link that adds the API key to requests
+      const authLink = setContext((_, { headers }) => {
+        const apiKey = getApiKey();
+        return {
+          headers: {
+            ...headers,
+            ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+          },
+        };
+      });
+
       return {
-        link: httpLink.create({ uri: graphqlEndpoint }),
+        link: ApolloLink.from([
+          authLink,
+          httpLink.create({ uri: graphqlEndpoint }),
+        ]),
         cache: new InMemoryCache({
           typePolicies: {
             Query: {

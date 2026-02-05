@@ -1,0 +1,7 @@
+mutation APIKeyRotate {
+  apiKey {
+    rotate {
+      apiKey
+    }
+  }
+}
