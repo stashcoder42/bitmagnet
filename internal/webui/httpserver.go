@@ -3,11 +3,10 @@ package webui
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"io/fs"
 	"net/http"
-	"time"
+	"strings"
 
 	"github.com/bitmagnet-io/bitmagnet/internal/apikey"
 	"github.com/bitmagnet-io/bitmagnet/internal/httpserver"
@@ -78,95 +77,78 @@ func (b *builder) Apply(e *gin.Engine) error {
 		return nil
 	}
 
-	// Create wrapped filesystem that injects API key into index.html
-	wrappedFS := &apiKeyInjectingFS{
-		FileSystem:    http.FS(appRoot),
-		apiKeyService: apiKeySvc,
-		originalIndex: originalIndex,
+	staticFS := http.FS(appRoot)
+
+	serveInjectedIndex := func(c *gin.Context) {
+		keyInfo, keyErr := apiKeySvc.GetKey(context.Background())
+		if keyErr != nil {
+			c.String(http.StatusInternalServerError, "failed to get API key")
+			return
+		}
+		configScript := `<script>window.__BITMAGNET_CONFIG__={apiKey:"` + keyInfo.Key + `"};</script>`
+		injectedHTML := bytes.Replace(
+			originalIndex,
+			[]byte("</head>"),
+			[]byte(configScript+"</head>"),
+			1,
+		)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", injectedHTML)
 	}
 
-	e.StaticFS("/webui", wrappedFS)
+	// Serve static files under /webui, with SPA fallback to injected index.html
+	e.GET("/webui/*filepath", func(c *gin.Context) {
+		filepath := c.Param("filepath")
+
+		// Serve injected index.html for root or index.html
+		if filepath == "/" || filepath == "/index.html" || filepath == "" {
+			serveInjectedIndex(c)
+			return
+		}
+
+		// Try to serve the static file
+		f, err := staticFS.Open(filepath)
+		if err != nil {
+			// SPA fallback: serve injected index.html for unknown paths
+			serveInjectedIndex(c)
+			return
+		}
+		defer f.Close()
+
+		stat, err := f.Stat()
+		if err != nil || stat.IsDir() {
+			serveInjectedIndex(c)
+			return
+		}
+
+		// Determine content type from extension
+		contentType := "application/octet-stream"
+		if strings.HasSuffix(filepath, ".js") {
+			contentType = "application/javascript"
+		} else if strings.HasSuffix(filepath, ".css") {
+			contentType = "text/css"
+		} else if strings.HasSuffix(filepath, ".html") {
+			contentType = "text/html; charset=utf-8"
+		} else if strings.HasSuffix(filepath, ".json") {
+			contentType = "application/json"
+		} else if strings.HasSuffix(filepath, ".svg") {
+			contentType = "image/svg+xml"
+		} else if strings.HasSuffix(filepath, ".woff") {
+			contentType = "font/woff"
+		} else if strings.HasSuffix(filepath, ".woff2") {
+			contentType = "font/woff2"
+		} else if strings.HasSuffix(filepath, ".png") {
+			contentType = "image/png"
+		} else if strings.HasSuffix(filepath, ".ico") {
+			contentType = "image/x-icon"
+		}
+
+		http.ServeContent(c.Writer, c.Request, stat.Name(), stat.ModTime(), f)
+		c.Header("Content-Type", contentType)
+	})
+
 	e.GET("/", func(c *gin.Context) {
 		c.Redirect(301, "/webui")
 	})
 
 	return nil
 }
-
-type apiKeyInjectingFS struct {
-	http.FileSystem
-	apiKeyService apikey.Service
-	originalIndex []byte
-}
-
-func (fs *apiKeyInjectingFS) Open(name string) (http.File, error) {
-	// Serve injected index.html for root path, index.html requests, or SPA fallback
-	if name == "/" || name == "/index.html" {
-		return fs.serveInjectedIndex()
-	}
-
-	f, err := fs.FileSystem.Open(name)
-	if err != nil && errors.Is(err, io.EOF) {
-		return nil, err
-	}
-	if err != nil {
-		// SPA routing fallback - serve index.html for missing files
-		return fs.serveInjectedIndex()
-	}
-
-	return f, nil
-}
-
-func (fs *apiKeyInjectingFS) serveInjectedIndex() (http.File, error) {
-	// Get the current API key
-	keyInfo, err := fs.apiKeyService.GetKey(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// Inject the API key config script before </head>
-	configScript := `<script>window.__BITMAGNET_CONFIG__={apiKey:"` + keyInfo.Key + `"};</script>`
-	injectedHTML := bytes.Replace(
-		fs.originalIndex,
-		[]byte("</head>"),
-		[]byte(configScript+"</head>"),
-		1,
-	)
-
-	return &inMemoryFile{
-		Reader: bytes.NewReader(injectedHTML),
-		name:   "index.html",
-		size:   int64(len(injectedHTML)),
-	}, nil
-}
-
-// inMemoryFile implements http.File for in-memory content
-type inMemoryFile struct {
-	*bytes.Reader
-	name string
-	size int64
-}
-
-func (f *inMemoryFile) Close() error {
-	return nil
-}
-
-func (f *inMemoryFile) Readdir(count int) ([]fs.FileInfo, error) {
-	return nil, nil
-}
-
-func (f *inMemoryFile) Stat() (fs.FileInfo, error) {
-	return &inMemoryFileInfo{name: f.name, size: f.size}, nil
-}
-
-type inMemoryFileInfo struct {
-	name string
-	size int64
-}
-
-func (fi *inMemoryFileInfo) Name() string       { return fi.name }
-func (fi *inMemoryFileInfo) Size() int64        { return fi.size }
-func (fi *inMemoryFileInfo) Mode() fs.FileMode  { return 0444 }
-func (fi *inMemoryFileInfo) ModTime() time.Time { return time.Now() }
-func (fi *inMemoryFileInfo) IsDir() bool        { return false }
-func (fi *inMemoryFileInfo) Sys() interface{}   { return nil }
