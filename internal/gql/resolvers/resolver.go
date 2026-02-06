@@ -1,7 +1,6 @@
 package resolvers
 
 import (
-	"github.com/bitmagnet-io/bitmagnet/internal/apikey"
 	"github.com/bitmagnet-io/bitmagnet/internal/blocking"
 	"github.com/bitmagnet-io/bitmagnet/internal/database/dao"
 	"github.com/bitmagnet-io/bitmagnet/internal/database/search"
@@ -27,5 +26,4 @@ type Resolver struct {
 	TorrentMetricsClient torrentmetrics.Client
 	Processor            processor.Processor
 	BlockingManager      blocking.Manager
-	APIKeyService        apikey.Service
 }

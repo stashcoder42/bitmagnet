@@ -21,7 +21,6 @@ var (
 	ContentAttribute         *contentAttribute
 	ContentCollection        *contentCollection
 	ContentCollectionContent *contentCollectionContent
-	KeyValue                 *keyValue
 	MetadataSource           *metadataSource
 	QueueJob                 *queueJob
 	Torrent                  *torrent
@@ -40,7 +39,6 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	ContentAttribute = &Q.ContentAttribute
 	ContentCollection = &Q.ContentCollection
 	ContentCollectionContent = &Q.ContentCollectionContent
-	KeyValue = &Q.KeyValue
 	MetadataSource = &Q.MetadataSource
 	QueueJob = &Q.QueueJob
 	Torrent = &Q.Torrent
@@ -60,7 +58,6 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		ContentAttribute:         newContentAttribute(db, opts...),
 		ContentCollection:        newContentCollection(db, opts...),
 		ContentCollectionContent: newContentCollectionContent(db, opts...),
-		KeyValue:                 newKeyValue(db, opts...),
 		MetadataSource:           newMetadataSource(db, opts...),
 		QueueJob:                 newQueueJob(db, opts...),
 		Torrent:                  newTorrent(db, opts...),
@@ -81,7 +78,6 @@ type Query struct {
 	ContentAttribute         contentAttribute
 	ContentCollection        contentCollection
 	ContentCollectionContent contentCollectionContent
-	KeyValue                 keyValue
 	MetadataSource           metadataSource
 	QueueJob                 queueJob
 	Torrent                  torrent
@@ -103,7 +99,6 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		ContentAttribute:         q.ContentAttribute.clone(db),
 		ContentCollection:        q.ContentCollection.clone(db),
 		ContentCollectionContent: q.ContentCollectionContent.clone(db),
-		KeyValue:                 q.KeyValue.clone(db),
 		MetadataSource:           q.MetadataSource.clone(db),
 		QueueJob:                 q.QueueJob.clone(db),
 		Torrent:                  q.Torrent.clone(db),
@@ -132,7 +127,6 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		ContentAttribute:         q.ContentAttribute.replaceDB(db),
 		ContentCollection:        q.ContentCollection.replaceDB(db),
 		ContentCollectionContent: q.ContentCollectionContent.replaceDB(db),
-		KeyValue:                 q.KeyValue.replaceDB(db),
 		MetadataSource:           q.MetadataSource.replaceDB(db),
 		QueueJob:                 q.QueueJob.replaceDB(db),
 		Torrent:                  q.Torrent.replaceDB(db),
@@ -151,7 +145,6 @@ type queryCtx struct {
 	ContentAttribute         IContentAttributeDo
 	ContentCollection        IContentCollectionDo
 	ContentCollectionContent IContentCollectionContentDo
-	KeyValue                 IKeyValueDo
 	MetadataSource           IMetadataSourceDo
 	QueueJob                 IQueueJobDo
 	Torrent                  ITorrentDo
@@ -170,7 +163,6 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		ContentAttribute:         q.ContentAttribute.WithContext(ctx),
 		ContentCollection:        q.ContentCollection.WithContext(ctx),
 		ContentCollectionContent: q.ContentCollectionContent.WithContext(ctx),
-		KeyValue:                 q.KeyValue.WithContext(ctx),
 		MetadataSource:           q.MetadataSource.WithContext(ctx),
 		QueueJob:                 q.QueueJob.WithContext(ctx),
 		Torrent:                  q.Torrent.WithContext(ctx),

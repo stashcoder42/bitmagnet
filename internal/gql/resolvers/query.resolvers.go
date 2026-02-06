@@ -105,21 +105,6 @@ func (r *queryResolver) TorrentContent(ctx context.Context) (gqlmodel.TorrentCon
 	}, nil
 }
 
-// APIKey is the resolver for the apiKey field.
-func (r *queryResolver) APIKey(ctx context.Context) (gen.APIKeyQuery, error) {
-	keyInfo, err := r.APIKeyService.GetKey(ctx)
-	if err != nil {
-		return gen.APIKeyQuery{}, err
-	}
-	return gen.APIKeyQuery{
-		Current: gen.APIKeyInfo{
-			APIKey:    keyInfo.Key,
-			CreatedAt: keyInfo.CreatedAt,
-			UpdatedAt: keyInfo.UpdatedAt,
-		},
-	}, nil
-}
-
 // Files is the resolver for the files field.
 func (r *torrentQueryResolver) Files(ctx context.Context, obj *gqlmodel.TorrentQuery, input gqlmodel.TorrentFilesQueryInput) (query.GenericResult[model.TorrentFile], error) {
 	return gqlmodel.TorrentQuery{

@@ -86,11 +86,6 @@ export const routes: Routes = [
     ],
   },
   {
-    path: "settings",
-    loadComponent: () =>
-      import("./settings/settings.component").then((c) => c.SettingsComponent),
-  },
-  {
     path: "**",
     loadComponent: () =>
       import("./not-found/not-found.component").then(

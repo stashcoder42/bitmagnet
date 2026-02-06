@@ -5,6 +5,7 @@ type Config struct {
 	GinMode      string
 	Cors         CorsConfig
 	Options      []string
+	APIKey       string
 }
 
 type CorsConfig struct {

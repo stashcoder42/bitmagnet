@@ -51,16 +51,6 @@
     <app-health-widget />
     <button
       mat-icon-button
-      routerLink="settings"
-      #linkSettings="routerLinkActive"
-      routerLinkActive
-      [class]="linkSettings.isActive ? 'active' : ''"
-      [matTooltip]="t('routes.settings')"
-    >
-      <mat-icon>settings</mat-icon>
-    </button>
-    <button
-      mat-icon-button
       aria-label="Theme"
       [matMenuTriggerFor]="themesMenu"
       [matTooltip]="t('layout.change_theme')"

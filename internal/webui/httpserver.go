@@ -2,15 +2,12 @@ package webui
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"io/fs"
 	"net/http"
 	"strings"
 
-	"github.com/bitmagnet-io/bitmagnet/internal/apikey"
 	"github.com/bitmagnet-io/bitmagnet/internal/httpserver"
-	"github.com/bitmagnet-io/bitmagnet/internal/lazy"
 	"github.com/bitmagnet-io/bitmagnet/webui"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -19,8 +16,8 @@ import (
 
 type Params struct {
 	fx.In
-	Logger        *zap.SugaredLogger
-	APIKeyService lazy.Lazy[apikey.Service]
+	Logger *zap.SugaredLogger
+	Config httpserver.Config
 }
 
 type Result struct {
@@ -31,15 +28,15 @@ type Result struct {
 func New(p Params) Result {
 	return Result{
 		Option: &builder{
-			logger:        p.Logger.Named("webui"),
-			apiKeyService: p.APIKeyService,
+			logger: p.Logger.Named("webui"),
+			apiKey: p.Config.APIKey,
 		},
 	}
 }
 
 type builder struct {
-	logger        *zap.SugaredLogger
-	apiKeyService lazy.Lazy[apikey.Service]
+	logger *zap.SugaredLogger
+	apiKey string
 }
 
 func (*builder) Key() string {
@@ -56,11 +53,6 @@ func (b *builder) Apply(e *gin.Engine) error {
 			appRootErr)
 
 		return nil
-	}
-
-	apiKeySvc, err := b.apiKeyService.Get()
-	if err != nil {
-		return err
 	}
 
 	// Read the original index.html at startup
@@ -80,12 +72,7 @@ func (b *builder) Apply(e *gin.Engine) error {
 	staticFS := http.FS(appRoot)
 
 	serveInjectedIndex := func(c *gin.Context) {
-		keyInfo, keyErr := apiKeySvc.GetKey(context.Background())
-		if keyErr != nil {
-			c.String(http.StatusInternalServerError, "failed to get API key")
-			return
-		}
-		configScript := `<script>window.__BITMAGNET_CONFIG__={apiKey:"` + keyInfo.Key + `"};</script>`
+		configScript := `<script>window.__BITMAGNET_CONFIG__={apiKey:"` + b.apiKey + `"};</script>`
 		injectedHTML := bytes.Replace(
 			originalIndex,
 			[]byte("</head>"),

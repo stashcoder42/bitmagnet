@@ -15,20 +15,6 @@ import (
 	"github.com/bitmagnet-io/bitmagnet/internal/protocol"
 )
 
-type APIKeyInfo struct {
-	APIKey    string    `json:"apiKey"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-type APIKeyQuery struct {
-	Current APIKeyInfo `json:"current"`
-}
-
-type APIKeyRotateResult struct {
-	APIKey string `json:"apiKey"`
-}
-
 type ContentTypeAgg struct {
 	Value      *model.ContentType `json:"value,omitempty"`
 	Label      string             `json:"label"`

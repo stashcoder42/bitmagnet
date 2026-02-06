@@ -2,7 +2,6 @@
  * Extra translation keys:
  *
  * t(routes.dashboard)
- * t(routes.settings)
  * t(routes.torrents)
  * t(content_types.singular.movie)
  * t(content_types.singular.tv_show)

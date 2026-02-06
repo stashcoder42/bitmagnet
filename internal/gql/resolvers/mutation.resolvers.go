@@ -15,17 +15,6 @@ import (
 	"github.com/bitmagnet-io/bitmagnet/internal/protocol"
 )
 
-// Rotate is the resolver for the rotate field.
-func (r *aPIKeyMutationResolver) Rotate(ctx context.Context, obj *gqlmodel.APIKeyMutation) (gen.APIKeyRotateResult, error) {
-	keyInfo, err := obj.APIKeyService.RotateKey(ctx)
-	if err != nil {
-		return gen.APIKeyRotateResult{}, err
-	}
-	return gen.APIKeyRotateResult{
-		APIKey: keyInfo.Key,
-	}, nil
-}
-
 // Torrent is the resolver for the torrent field.
 func (r *mutationResolver) Torrent(ctx context.Context) (gqlmodel.TorrentMutation, error) {
 	return gqlmodel.TorrentMutation{}, nil
@@ -34,13 +23,6 @@ func (r *mutationResolver) Torrent(ctx context.Context) (gqlmodel.TorrentMutatio
 // Queue is the resolver for the queue field.
 func (r *mutationResolver) Queue(ctx context.Context) (gqlmodel.QueueMutation, error) {
 	return gqlmodel.QueueMutation{QueueManager: r.QueueManager}, nil
-}
-
-// APIKey is the resolver for the apiKey field.
-func (r *mutationResolver) APIKey(ctx context.Context) (gqlmodel.APIKeyMutation, error) {
-	return gqlmodel.APIKeyMutation{
-		APIKeyService: r.APIKeyService,
-	}, nil
 }
 
 // Delete is the resolver for the delete field.
@@ -89,15 +71,11 @@ func (r *torrentMutationResolver) Reprocess(ctx context.Context, obj *gqlmodel.T
 	return nil, r.Processor.Process(ctx, params)
 }
 
-// APIKeyMutation returns gql.APIKeyMutationResolver implementation.
-func (r *Resolver) APIKeyMutation() gql.APIKeyMutationResolver { return &aPIKeyMutationResolver{r} }
-
 // Mutation returns gql.MutationResolver implementation.
 func (r *Resolver) Mutation() gql.MutationResolver { return &mutationResolver{r} }
 
 // TorrentMutation returns gql.TorrentMutationResolver implementation.
 func (r *Resolver) TorrentMutation() gql.TorrentMutationResolver { return &torrentMutationResolver{r} }
 
-type aPIKeyMutationResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type torrentMutationResolver struct{ *Resolver }

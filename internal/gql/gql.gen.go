@@ -47,7 +47,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	APIKeyMutation() APIKeyMutationResolver
 	Content() ContentResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -63,24 +62,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	APIKeyInfo struct {
-		APIKey    func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-	}
-
-	APIKeyMutation struct {
-		Rotate func(childComplexity int) int
-	}
-
-	APIKeyQuery struct {
-		Current func(childComplexity int) int
-	}
-
-	APIKeyRotateResult struct {
-		APIKey func(childComplexity int) int
-	}
-
 	Content struct {
 		Adult            func(childComplexity int) int
 		Attributes       func(childComplexity int) int
@@ -177,13 +158,11 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		APIKey  func(childComplexity int) int
 		Queue   func(childComplexity int) int
 		Torrent func(childComplexity int) int
 	}
 
 	Query struct {
-		APIKey         func(childComplexity int) int
 		Health         func(childComplexity int) int
 		Queue          func(childComplexity int) int
 		Torrent        func(childComplexity int) int
@@ -452,16 +431,12 @@ type ComplexityRoot struct {
 	}
 }
 
-type APIKeyMutationResolver interface {
-	Rotate(ctx context.Context, obj *gqlmodel.APIKeyMutation) (gen.APIKeyRotateResult, error)
-}
 type ContentResolver interface {
 	OriginalLanguage(ctx context.Context, obj *model.Content) (*model.Language, error)
 }
 type MutationResolver interface {
 	Torrent(ctx context.Context) (gqlmodel.TorrentMutation, error)
 	Queue(ctx context.Context) (gqlmodel.QueueMutation, error)
-	APIKey(ctx context.Context) (gqlmodel.APIKeyMutation, error)
 }
 type QueryResolver interface {
 	Version(ctx context.Context) (string, error)
@@ -470,7 +445,6 @@ type QueryResolver interface {
 	Queue(ctx context.Context) (gqlmodel.QueueQuery, error)
 	Torrent(ctx context.Context) (gqlmodel.TorrentQuery, error)
 	TorrentContent(ctx context.Context) (gqlmodel.TorrentContentQuery, error)
-	APIKey(ctx context.Context) (gen.APIKeyQuery, error)
 }
 type QueueJobResolver interface {
 	RanAt(ctx context.Context, obj *model.QueueJob) (*time.Time, error)
@@ -514,48 +488,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "APIKeyInfo.apiKey":
-		if e.complexity.APIKeyInfo.APIKey == nil {
-			break
-		}
-
-		return e.complexity.APIKeyInfo.APIKey(childComplexity), true
-
-	case "APIKeyInfo.createdAt":
-		if e.complexity.APIKeyInfo.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.APIKeyInfo.CreatedAt(childComplexity), true
-
-	case "APIKeyInfo.updatedAt":
-		if e.complexity.APIKeyInfo.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.APIKeyInfo.UpdatedAt(childComplexity), true
-
-	case "APIKeyMutation.rotate":
-		if e.complexity.APIKeyMutation.Rotate == nil {
-			break
-		}
-
-		return e.complexity.APIKeyMutation.Rotate(childComplexity), true
-
-	case "APIKeyQuery.current":
-		if e.complexity.APIKeyQuery.Current == nil {
-			break
-		}
-
-		return e.complexity.APIKeyQuery.Current(childComplexity), true
-
-	case "APIKeyRotateResult.apiKey":
-		if e.complexity.APIKeyRotateResult.APIKey == nil {
-			break
-		}
-
-		return e.complexity.APIKeyRotateResult.APIKey(childComplexity), true
 
 	case "Content.adult":
 		if e.complexity.Content.Adult == nil {
@@ -970,13 +902,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MetadataSource.Name(childComplexity), true
 
-	case "Mutation.apiKey":
-		if e.complexity.Mutation.APIKey == nil {
-			break
-		}
-
-		return e.complexity.Mutation.APIKey(childComplexity), true
-
 	case "Mutation.queue":
 		if e.complexity.Mutation.Queue == nil {
 			break
@@ -990,13 +915,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Torrent(childComplexity), true
-
-	case "Query.apiKey":
-		if e.complexity.Query.APIKey == nil {
-			break
-		}
-
-		return e.complexity.Query.APIKey(childComplexity), true
 
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
@@ -2670,15 +2588,6 @@ type ContentCollection {
 	{Name: "../../graphql/schema/mutation.graphqls", Input: `type Mutation {
   torrent: TorrentMutation!
   queue: QueueMutation!
-  apiKey: APIKeyMutation!
-}
-
-type APIKeyMutation {
-  rotate: APIKeyRotateResult!
-}
-
-type APIKeyRotateResult {
-  apiKey: String!
 }
 
 type TorrentMutation {
@@ -2704,17 +2613,6 @@ input TorrentReprocessInput {
   queue: QueueQuery!
   torrent: TorrentQuery!
   torrentContent: TorrentContentQuery!
-  apiKey: APIKeyQuery!
-}
-
-type APIKeyQuery {
-  current: APIKeyInfo!
-}
-
-type APIKeyInfo {
-  apiKey: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
 }
 
 type TorrentQuery {
@@ -3669,282 +3567,6 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _APIKeyInfo_apiKey(ctx context.Context, field graphql.CollectedField, obj *gen.APIKeyInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyInfo_apiKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.APIKey, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyInfo_apiKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _APIKeyInfo_createdAt(ctx context.Context, field graphql.CollectedField, obj *gen.APIKeyInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyInfo_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyInfo_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DateTime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _APIKeyInfo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gen.APIKeyInfo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyInfo_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyInfo_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyInfo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DateTime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _APIKeyMutation_rotate(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.APIKeyMutation) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyMutation_rotate(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.APIKeyMutation().Rotate(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gen.APIKeyRotateResult)
-	fc.Result = res
-	return ec.marshalNAPIKeyRotateResult2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyRotateResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyMutation_rotate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyMutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "apiKey":
-				return ec.fieldContext_APIKeyRotateResult_apiKey(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type APIKeyRotateResult", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _APIKeyQuery_current(ctx context.Context, field graphql.CollectedField, obj *gen.APIKeyQuery) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyQuery_current(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Current, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gen.APIKeyInfo)
-	fc.Result = res
-	return ec.marshalNAPIKeyInfo2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyQuery_current(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyQuery",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "apiKey":
-				return ec.fieldContext_APIKeyInfo_apiKey(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_APIKeyInfo_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_APIKeyInfo_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type APIKeyInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _APIKeyRotateResult_apiKey(ctx context.Context, field graphql.CollectedField, obj *gen.APIKeyRotateResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_APIKeyRotateResult_apiKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.APIKey, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_APIKeyRotateResult_apiKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKeyRotateResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Content_type(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Content_type(ctx, field)
@@ -6694,54 +6316,6 @@ func (ec *executionContext) fieldContext_Mutation_queue(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_apiKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_apiKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().APIKey(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gqlmodel.APIKeyMutation)
-	fc.Result = res
-	return ec.marshalNAPIKeyMutation2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐAPIKeyMutation(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_apiKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "rotate":
-				return ec.fieldContext_APIKeyMutation_rotate(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type APIKeyMutation", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_version(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_version(ctx, field)
 	if err != nil {
@@ -7031,54 +6605,6 @@ func (ec *executionContext) fieldContext_Query_torrentContent(_ context.Context,
 				return ec.fieldContext_TorrentContentQuery_search(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TorrentContentQuery", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_apiKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_apiKey(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().APIKey(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gen.APIKeyQuery)
-	fc.Result = res
-	return ec.marshalNAPIKeyQuery2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyQuery(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_apiKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "current":
-				return ec.fieldContext_APIKeyQuery_current(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type APIKeyQuery", field.Name)
 		},
 	}
 	return fc, nil
@@ -17545,203 +17071,6 @@ func (ec *executionContext) unmarshalInputVideoSourceFacetInput(ctx context.Cont
 
 // region    **************************** object.gotpl ****************************
 
-var aPIKeyInfoImplementors = []string{"APIKeyInfo"}
-
-func (ec *executionContext) _APIKeyInfo(ctx context.Context, sel ast.SelectionSet, obj *gen.APIKeyInfo) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyInfoImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("APIKeyInfo")
-		case "apiKey":
-			out.Values[i] = ec._APIKeyInfo_apiKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createdAt":
-			out.Values[i] = ec._APIKeyInfo_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updatedAt":
-			out.Values[i] = ec._APIKeyInfo_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var aPIKeyMutationImplementors = []string{"APIKeyMutation"}
-
-func (ec *executionContext) _APIKeyMutation(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.APIKeyMutation) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyMutationImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("APIKeyMutation")
-		case "rotate":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._APIKeyMutation_rotate(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var aPIKeyQueryImplementors = []string{"APIKeyQuery"}
-
-func (ec *executionContext) _APIKeyQuery(ctx context.Context, sel ast.SelectionSet, obj *gen.APIKeyQuery) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyQueryImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("APIKeyQuery")
-		case "current":
-			out.Values[i] = ec._APIKeyQuery_current(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var aPIKeyRotateResultImplementors = []string{"APIKeyRotateResult"}
-
-func (ec *executionContext) _APIKeyRotateResult(ctx context.Context, sel ast.SelectionSet, obj *gen.APIKeyRotateResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyRotateResultImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("APIKeyRotateResult")
-		case "apiKey":
-			out.Values[i] = ec._APIKeyRotateResult_apiKey(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var contentImplementors = []string{"Content"}
 
 func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, obj *model.Content) graphql.Marshaler {
@@ -18473,13 +17802,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "apiKey":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_apiKey(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18642,28 +17964,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_torrentContent(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "apiKey":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_apiKey(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -21329,22 +20629,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
-
-func (ec *executionContext) marshalNAPIKeyInfo2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyInfo(ctx context.Context, sel ast.SelectionSet, v gen.APIKeyInfo) graphql.Marshaler {
-	return ec._APIKeyInfo(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAPIKeyMutation2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚐAPIKeyMutation(ctx context.Context, sel ast.SelectionSet, v gqlmodel.APIKeyMutation) graphql.Marshaler {
-	return ec._APIKeyMutation(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAPIKeyQuery2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyQuery(ctx context.Context, sel ast.SelectionSet, v gen.APIKeyQuery) graphql.Marshaler {
-	return ec._APIKeyQuery(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAPIKeyRotateResult2githubᚗcomᚋbitmagnetᚑioᚋbitmagnetᚋinternalᚋgqlᚋgqlmodelᚋgenᚐAPIKeyRotateResult(ctx context.Context, sel ast.SelectionSet, v gen.APIKeyRotateResult) graphql.Marshaler {
-	return ec._APIKeyRotateResult(ctx, sel, &v)
-}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)

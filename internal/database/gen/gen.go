@@ -383,10 +383,6 @@ func BuildGenerator(db *gorm.DB) *gen.Generator {
 			torrentContentBaseOptions...,
 		)...,
 	)
-	keyValues := g.GenerateModel(
-		"key_values",
-		createdAtReadOnly,
-	)
 	queueJobs := g.GenerateModel(
 		"queue_jobs",
 		gen.FieldGORMTag("id", func(tag field.GormTag) field.GormTag {
@@ -444,7 +440,6 @@ func BuildGenerator(db *gorm.DB) *gen.Generator {
 		content,
 		contentCollectionContent,
 		contentAttributes,
-		keyValues,
 		queueJobs,
 	)
 
